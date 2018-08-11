@@ -14,7 +14,9 @@ class TableRow extends Component {
     
     render() {
         const { connectDragSource, ...rest} = this.props
+        
         return connectDragSource(defaultTableHeaderRowRenderer(rest))
+       
     }
 }
 

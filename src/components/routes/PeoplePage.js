@@ -1,5 +1,6 @@
 import React, {Component} from 'react'
 import AddPeopleFrom from '../people/AddPeopleForm'
+import PeopleList from '../people/PeopleList'
 import PeopleTable from '../people/PeopleTable'
 import {connect} from 'react-redux'
 import {Route, NavLink} from 'react-router-dom'
@@ -11,6 +12,7 @@ class PeoplePage extends Component {
         const {loading} = this.props
         return (
             <div>
+                <PeopleList/>
                 <h1>Add new Pperson</h1>
                 <NavLink to="/people/add" activeStyle={{color: 'red'}}>AppUser</NavLink>
                 <NavLink to="/people/show" activeStyle={{color: 'red'}}>AppUser</NavLink>

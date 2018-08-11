@@ -82,24 +82,12 @@ loadMoreRows = () => {
   }
 
   handleRowClick = ({rowData}) => {
-      
+      console.log('---','row click')
       const {selectEvent} = this.props
       selectEvent && selectEvent(rowData.uid)
   }
 }
 
-const elementSource = {
-    beginDrag(props) {
-        console.log('beginDrag')
-        return {}
-    }
-}
-function collect(connect, monitor) {
-    return {
-        connectDragSource: connect.dragSource(),
-        isDragging:monitor.isDragging()
-    }
-}
 
 
 export default connect(state => ({

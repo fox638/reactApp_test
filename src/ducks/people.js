@@ -1,6 +1,6 @@
 import {appName} from '../config'
 import {Record,  OrderedMap} from 'immutable'
-import {put, call , takeEvery, all, select, fork, spawn} from 'redux-saga/effects'
+import {put, call , takeEvery, all, select, fork, spawn, cancel, cancelled, race} from 'redux-saga/effects'
 import {delay} from 'redux-saga'
 import {fbDataToEntities} from './utils'
 import {reset} from 'redux-form'
@@ -8,7 +8,7 @@ import {createSelector} from 'reselect'
 import firebase from 'firebase'
 
 // delay создает задержку
-// fork позволяет выполнить фоновую задачу
+// fork позволяет выполнить фоновую задачу он запускает сагу не блокирующим способом 
 // spawn аналогичен fork но не валит все саги в случаии ошибки
 
 export const moduleName = 'people'
@@ -165,10 +165,29 @@ export const addEventSaga = function * (action) {
 }
 
 export const backgroundSyncSaga = function * () {
-  while(true){
-    yield call(fetchAllPersonSaga)
-    yield delay(4000)
+  try { //перехватываем остановку задачи 
+    while(true){
+        yield call(fetchAllPersonSaga)
+        yield delay(2000)
+        
+      }
+  } finally {
+      if(yield cancelled()) { // эффект проверяет действительно ли сага была остановлена 
+          console.log('----', 'cancel sync saga')
+      }
   }
+   
+}
+
+export const cancelllabeleSync = function * (){
+    yield race({ // этот эффект ждет одну сагу и остальные отменяет 
+        sync: backgroundSyncSaga(),
+        delay: delay(6000) // Как только эта сага закончиться остальные будут отменены но запущены будут все 
+    })
+
+    //const task = yield fork(backgroundSyncSaga)
+   // yield delay(6000)
+    //yield cancel(task) // здесь происходит отмена задачи обновления данных в фоне 
 }
 
 // export function peopleAdd({email, firstName, lastName}) {
@@ -192,7 +211,7 @@ export const backgroundSyncSaga = function * () {
 // }
 
 export const saga = function  * () {
-    yield fork(backgroundSyncSaga)
+    yield spawn(cancelllabeleSync)// Эта задача будет запущенна отдельно в фоне 
     yield all([
         takeEvery(ADD_PERSON_REQUEST, addPersonSaga),
         takeEvery(FETCH_ALL_REQUEST, fetchAllPersonSaga),
