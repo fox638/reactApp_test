@@ -1,7 +1,8 @@
 import firebase from 'firebase'
 import {appName} from '../config'
 import {Record} from 'immutable'
-import {all, apply, call, take, put, cps, takeEvery} from 'redux-saga/effects'
+import {all, apply, call, take, put, cps, takeEvery, spawn} from 'redux-saga/effects'
+import {eventChannel} from 'redux-saga'
 import {push} from 'react-router-redux'
 export const ReducerRecord = Record({
     user: null,
@@ -29,11 +30,11 @@ export default function reducer(state = new ReducerRecord(), action) {
         case SIGN_UP_REQUEST:
             return state.set('loading', true)
     
-        case SIGN_UP_SUCCESS:
+        /* case SIGN_UP_SUCCESS:
             return state
                     .set('loading', false)
                     .set('user', payload.user)
-                    .set('error', null)
+                    .set('error', null) */
 
         case SIGN_IN_SUCCESS:
             return state
@@ -91,10 +92,10 @@ export const signUpSaga = function * () {
                 action.payload.email, action.payload.password
             )
         
-            yield put({
+            /* yield put({
                 type: SIGN_UP_SUCCESS,
                 payload: {user}
-            })
+            }) */
         } catch (error){
             yield put({
                 type: SIGN_UP_ERROR,
@@ -107,7 +108,7 @@ export const signUpSaga = function * () {
    
 }
 
-export const watchStatusChange = function * () {
+export const watchStatusChange = function * () { //ceйчас не используеться все переделано на каналы 
     const auth = firebase.auth()
         try {
             yield cps([auth, auth.onAuthStateChanged])
@@ -158,10 +159,7 @@ export const signOutSaga = function * () {
     const auth = firebase.auth()
     try {
         yield call([auth, auth.signOut])
-        yield put({
-            type: SIGN_OUT_SUCCESS
-        })
-        yield put(push('/auth/signin'))
+        
         
     } catch (error) {
         
@@ -180,10 +178,7 @@ export const signInSaga = function * () {
                 action.payload.email, action.payload.password
             )
 
-            yield put({
-                type: SIGN_IN_SUCCESS,
-                payload: {user}
-            })
+            
         } catch (error) {
             yield put({
                 type: SIGN_IN_ERROR,
@@ -194,10 +189,40 @@ export const signInSaga = function * () {
    
 }
 
+/* const createAuchSoket = () => eventChannel(emmit => {
+    firebase.auth().onAuthStateChanged(user => emmit({ user }))
+   //const auch = firebase.auth()
+   // auch.onAuthStateChanged((user, error) => emmit({user, error}))
+}) */
+const createAuthChannel = () => eventChannel(emit => firebase.auth().onAuthStateChanged(user => emit({ user })))
+
+export const realitmeSync = function * () {
+    const chan = yield call(createAuthChannel)
+    while (true) {
+        const { user, error } = yield take(chan)
+        
+        if(user){
+            console.log('----- Auch user')
+            console.log(user)
+            yield put({
+                type: SIGN_IN_SUCCESS,
+                payload: {user}
+            })
+
+        } else {
+            yield put({
+                type: SIGN_OUT_SUCCESS
+            })
+            yield put(push('/auth/signin'))
+        }
+    }
+}
+
 export const saga = function * () {
+    yield spawn(realitmeSync)
     yield all([
         signUpSaga(),
-        watchStatusChange(),
+      //  watchStatusChange(),
         takeEvery(SIGN_OUT_REQUEST, signOutSaga),
         takeEvery(SIGN_IN_REQUEST, signInSaga)
     ])
