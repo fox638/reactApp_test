@@ -9,6 +9,14 @@ export class PeopleTable extends Component {
     this.props.fetchAllPeople && this.props.fetchAllPeople()
   }
 
+  componentDidUpdate({people}){
+    if (people.length && this.props.people.length > people.length){
+      setTimeout(()=>{
+        this.table.scrollToRow(this.props.people.length)
+      }, 0)
+    }
+  }
+
   render() {
     return (
     <TransitionMotion
