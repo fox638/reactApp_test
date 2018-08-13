@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
 import {DragSource} from 'react-dnd'
 import {getEmptyImage} from 'react-dnd-html5-backend'
+import {TransitionMotion, spring} from 'react-motion'
 
 class PersonCard extends Component {
 

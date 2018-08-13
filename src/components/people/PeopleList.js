@@ -4,6 +4,7 @@ import {connect} from 'react-redux'
 import {peopleListSelector, fetchAllPeople} from '../../ducks/people'
 import PersonCard from './PersonCard'
 
+
 class PeopleList extends Component {
     static propTypes = {
 
